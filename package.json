@@ -208,7 +208,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/Unitech/pm2.git"
+    "url": "git://github.com/azuliani/pm2.git"
   },
   "license": "AGPL-3.0"
 }
