@@ -1,0 +1,142 @@
+name: Check for Upstream Changes
+
+on:
+  schedule:
+    # Run daily at 9am UTC
+    - cron: '0 9 * * *'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  check-upstream:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout fork
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Add upstream remote
+        run: |
+          git remote add upstream https://github.com/Unitech/pm2.git
+          git fetch upstream master
+
+      - name: Check for new commits
+        id: check
+        run: |
+          BEHIND=$(git rev-list --count HEAD..upstream/master)
+          echo "commits_behind=$BEHIND" >> $GITHUB_OUTPUT
+
+          if [ "$BEHIND" -gt 0 ]; then
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+            echo "Found $BEHIND new commits in upstream"
+
+            # Get commit summary
+            echo "commit_summary<<EOF" >> $GITHUB_OUTPUT
+            git log --oneline HEAD..upstream/master | head -20 >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+          else
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+            echo "Fork is up to date with upstream"
+          fi
+
+      - name: Create or update issue
+        if: steps.check.outputs.has_changes == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = '🔄 Upstream has new changes to merge';
+            const commitsBehind = '${{ steps.check.outputs.commits_behind }}';
+            const commitSummary = `${{ steps.check.outputs.commit_summary }}`;
+
+            const body = `## Upstream Changes Detected
+
+            This fork is **${commitsBehind} commits behind** [upstream/master](https://github.com/Unitech/pm2).
+
+            ### Recent upstream commits:
+            \`\`\`
+            ${commitSummary}
+            \`\`\`
+
+            ### To merge upstream changes:
+            \`\`\`bash
+            cd pm2
+            git fetch upstream
+            git merge upstream/master
+            # Resolve any conflicts in package.json
+            git push origin master
+            \`\`\`
+
+            ### After merging:
+            1. Update \`package.json\` version if needed
+            2. Ensure \`@azuliani/pm2-io\` dependency is preserved (not reverted to \`@pm2/io\`)
+            3. Re-publish to npm: \`npm publish --access public\`
+
+            ---
+            *This issue is automatically updated when new upstream changes are detected.*
+            *Last checked: ${new Date().toISOString()}*`;
+
+            // Look for existing issue
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'upstream-sync'
+            });
+
+            const existingIssue = issues.data.find(issue => issue.title === title);
+
+            if (existingIssue) {
+              // Update existing issue
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existingIssue.number,
+                body: body
+              });
+              console.log(`Updated issue #${existingIssue.number}`);
+            } else {
+              // Create new issue
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: title,
+                body: body,
+                labels: ['upstream-sync']
+              });
+              console.log('Created new issue');
+            }
+
+      - name: Close issue if up to date
+        if: steps.check.outputs.has_changes == 'false'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = '🔄 Upstream has new changes to merge';
+
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'upstream-sync'
+            });
+
+            const existingIssue = issues.data.find(issue => issue.title === title);
+
+            if (existingIssue) {
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existingIssue.number,
+                state: 'closed',
+                state_reason: 'completed'
+              });
+
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existingIssue.number,
+                body: '✅ Fork is now up to date with upstream. Closing this issue.'
+              });
+
+              console.log(`Closed issue #${existingIssue.number}`);
+            }
