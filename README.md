@@ -25,6 +25,31 @@
 <br/>
 </div>
 
+## About this fork (@azuliani/pm2)
+
+This is a fork of [PM2](https://github.com/Unitech/pm2) that **restarts processes on unhandled promise rejections**, just like PM2 does for uncaught exceptions.
+
+### Why this fork?
+
+By default, PM2 restarts your process when an uncaught exception occurs, but **not** when an unhandled promise rejection occurs. This inconsistency can leave your application in a broken state without triggering a restart.
+
+This fork uses [@azuliani/pm2-io](https://github.com/azuliani/pm2-io-apm), which adds `process.exit(1)` to the unhandled rejection handler, ensuring your process restarts and recovers automatically.
+
+### Installation
+
+```bash
+npm install -g @azuliani/pm2
+```
+
+### Usage
+
+Use it exactly like standard PM2:
+
+```bash
+pm2 start app.js
+```
+
+---
 
 PM2 is a production process manager for Node.js/Bun applications with a built-in load balancer. It allows you to keep applications alive forever, to reload them without downtime and to facilitate common system admin tasks.
 
