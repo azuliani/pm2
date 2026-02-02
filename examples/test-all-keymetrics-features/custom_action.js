@@ -1,5 +1,5 @@
 
-var axm = require('@pm2/io');
+var axm = require('@azuliani/pm2-io');
 
 axm.action('getEnv', function(reply) {
   reply(process.env);

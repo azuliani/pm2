@@ -28,7 +28,7 @@ Or on the PM2+ Web interface
 ## Example
 
 ```javascript
-const io = require('@pm2/io')
+const io = require('@azuliani/pm2-io')
 
 const currentReq = io.counter({
   name: 'CM: Current Processing',

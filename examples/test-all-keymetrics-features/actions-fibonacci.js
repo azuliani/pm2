@@ -47,7 +47,7 @@ function fib(n) {
 }
 
 
-var axm = require('@pm2/io');
+var axm = require('@azuliani/pm2-io');
 
 axm.action('load:start', function(reply) {
   fib(50000);

@@ -1,6 +1,6 @@
 
 
-var io = require('@pm2/io').init({ http : true });
+var io = require('@azuliani/pm2-io').init({ http : true });
 var probe = io.probe();
 
 var http  = require('http');

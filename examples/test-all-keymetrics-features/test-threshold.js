@@ -1,5 +1,5 @@
 
-var axm = require('@pm2/io');
+var axm = require('@azuliani/pm2-io');
 
 
 var users = 55

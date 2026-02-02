@@ -1,4 +1,4 @@
-var io     = require('@pm2/io');
+var io     = require('@azuliani/pm2-io');
 var pm2     = require('../..');
 var fs      = require('fs');
 var path    = require('path');
