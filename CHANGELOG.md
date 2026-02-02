@@ -1,4 +1,65 @@
 
+## 6.0.14
+
+- Fixed version of @pm2/pm2-version-check #6055
+- CVE-2025-64718 Update js-yaml
+- replace fs.R_OK with fs.constants.T_OK #6012 #6019
+
+## 6.0.13
+
+- Fix blessed package import
+
+## 6.0.12
+
+- #6037 Drop npm-shrinkwrap in favor of fixed dependencies versions
+- #5577 fix pm2 monit crash
+
+## 6.0.11
+
+- #6034 replace package-lock.json by npm-shrinkwrap.json
+- #5915 fix allowing to update namespaced pm2 NPM module (@org/module-name)
+
+## 6.0.10
+
+- revert #5971 #6031
+
+## 6.0.9
+
+- updates all typescript definitions
+- upgrade github ci workflows
+- upgrade mocha dep and adapt tests
+- bump packages
+- fix:Potential ReDoS Vulnerability or Inefficient Regular Expression in Project: Need for Assessment and Mitigation #5971
+
+## 6.0.8
+
+- fix: package-lock update
+
+## 6.0.7
+
+- fix: ansis-node10 https://github.com/Unitech/pm2/commit/99d9224e940d119a1ad5b241b4fc4e0db7c830ed @webdiscus
+
+## 6.0.6
+
+- refactor: replace chalk with smaller alternative by @webdiscus
+
+## 6.0.5
+
+- Bun support - Fixes #5893 #5774 #5682 #5675 #5777
+- Disable git parsing by default #5909 #2182 #5801 #5051 #5696
+- Add WEBP content type for pm2 serve #5900 @tbo47
+- Enable PM2 module update from tarball #5906 @AYOKINYA
+- Fix treekil on FreeBSD #5896 @skeyby
+- fix allowing to update namespaced pm2 NPM module (@org/module-name) #5915 @endelendel
+
+## 5.4.3
+
+- Update sub packages
+
+## 5.4.2
+
+- Update sub packages
+
 ## 5.4.1
 
 - @pm2/io DeprecationWarning: The util._extend API is deprecated https://github.com/keymetrics/pm2-io-apm/issues/301 @egoroof
