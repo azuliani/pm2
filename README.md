@@ -33,7 +33,7 @@ This is a fork of [PM2](https://github.com/Unitech/pm2) that **restarts processe
 
 By default, PM2 restarts your process when an uncaught exception occurs, but **not** when an unhandled promise rejection occurs. This inconsistency can leave your application in a broken state without triggering a restart.
 
-This fork uses [@azuliani/pm2-io](https://github.com/azuliani/pm2-io-apm), which adds `process.exit(1)` to the unhandled rejection handler, ensuring your process restarts and recovers automatically.
+This fork modifies PM2's core process containers to exit on unhandled rejections, ensuring your process restarts and recovers automatically. This works consistently in both **cluster mode** and **fork mode**.
 
 ### Installation
 
