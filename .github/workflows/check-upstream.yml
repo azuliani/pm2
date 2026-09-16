@@ -68,7 +68,7 @@ jobs:
 
             ### After merging:
             1. Update \`package.json\` version if needed
-            2. Ensure \`@azuliani/pm2-io\` dependency is preserved (not reverted to \`@pm2/io\`)
+            2. Ensure no \`unhandledRejection\` listener was reintroduced in \`lib/ProcessContainer*.js\` or \`modules/pm2-io-bpm/features/notify.js\`, and \`process.emit('disconnect')\` stays out of the uncaughtException exit path
             3. Re-publish to npm: \`npm publish --access public\`
 
             ---

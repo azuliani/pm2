@@ -16,6 +16,7 @@ runTest ./test/e2e/cli/reload.sh
 runTest ./test/e2e/cli/start-app.sh
 runTest ./test/e2e/cli/operate-regex.sh
 #runTest ./test/e2e/cli/bun.sh
+runTest ./test/e2e/cli/typescript.sh
 runTest ./test/e2e/cli/app-configuration.sh
 runTest ./test/e2e/cli/binary.sh
 runTest ./test/e2e/cli/startOrX.sh
@@ -70,7 +71,7 @@ fi
 
 runTest ./test/e2e/internals/infinite-loop.sh
 runTest ./test/e2e/internals/options-via-env.sh
-#runTest ./test/e2e/internals/promise.sh
+runTest ./test/e2e/internals/promise.sh
 runTest ./test/e2e/internals/increment-var.sh
 runTest ./test/e2e/internals/start-consistency.sh
 

@@ -1,5 +1,5 @@
 /**
- * Copyright 2013-2022 the PM2 project authors. All rights reserved.
+ * Copyright 2013-present the PM2 project authors. All rights reserved.
  * Use of this source code is governed by a license that
  * can be found in the LICENSE file.
  */
@@ -38,15 +38,13 @@ var csts = {
   LOGROTATE_SCRIPT        : 'logrotate.d/pm2',
 
   DOCKERFILE_NODEJS       : 'Dockerfiles/Dockerfile-nodejs.tpl',
-  DOCKERFILE_JAVA         : 'Dockerfiles/Dockerfile-java.tpl',
-  DOCKERFILE_RUBY         : 'Dockerfiles/Dockerfile-ruby.tpl',
 
   SUCCESS_EXIT            : 0,
   ERROR_EXIT              : 1,
   CODE_UNCAUGHTEXCEPTION  : 1,
 
   IS_BUN                  : typeof Bun !== 'undefined',
-  IS_WINDOWS              : (process.platform === 'win32' || process.platform === 'win64' || /^(msys|cygwin)$/.test(process.env.OSTYPE)),
+  IS_WINDOWS              : (process.platform === 'win32' || /^(msys|cygwin)$/.test(process.env.OSTYPE)),
   ONLINE_STATUS           : 'online',
   STOPPED_STATUS          : 'stopped',
   STOPPING_STATUS         : 'stopping',
@@ -58,7 +56,7 @@ var csts = {
   CLUSTER_MODE_ID         : 'cluster_mode',
   FORK_MODE_ID            : 'fork_mode',
 
-  ENABLE_GIT_PARSING      : false,
+  ENABLE_GIT_PARSING      : process.env.PM2_ENABLE_GIT_PARSING === 'true' || false,
   LOW_MEMORY_ENVIRONMENT  : process.env.PM2_OPTIMIZE_MEMORY || false,
 
   MACHINE_NAME            : process.env.INSTANCE_NAME || process.env.MACHINE_NAME || process.env.PM2_MACHINE_NAME,
@@ -103,6 +101,7 @@ var csts = {
 
   WORKER_INTERVAL         : process.env.PM2_WORKER_INTERVAL || 30000,
   KILL_TIMEOUT            : process.env.PM2_KILL_TIMEOUT || 1600,
+  KILL_RETRY_TIME         : process.env.PM2_KILL_RETRY_TIME || 100,
   KILL_SIGNAL             : process.env.PM2_KILL_SIGNAL || 'SIGINT',
   KILL_USE_MESSAGE        : process.env.PM2_KILL_USE_MESSAGE || false,
 

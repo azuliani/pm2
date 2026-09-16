@@ -1,4 +1,4 @@
-var pmx  = require('@azuliani/pm2-io').init({
+var pmx  = require('../../modules/pm2-io-bpm').init({
   http: false
 });
 

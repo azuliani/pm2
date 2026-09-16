@@ -1,5 +1,5 @@
 
-var axm = require('@azuliani/pm2-io');
+var axm = require('../../../modules/pm2-io-bpm');
 
 setInterval(function() {
   axm.emit('user:register', {

@@ -1,4 +1,4 @@
-// Type definitions for pm2 6.0.8
+// Type definitions for pm2 7.0.0
 // Definitions by: João Portela https://www.github.com/jportela
 
 // Exported Methods
@@ -495,6 +495,10 @@ export interface StartOptions {
    */
   max_memory_restart?: number | string;
   /**
+   * Shortcut to inject a PORT environment variable into the started process.
+   */
+  port?: number;
+  /**
    * Arguments to pass to the interpreter
    */
   node_args?: string | string[];
@@ -643,6 +647,10 @@ export interface ServeOptions {
    * (Default: false) Single Page Application mode
    */
   spa?: boolean;
+  /**
+   * (Default: false) Enable directory listing (like python http.server)
+   */
+  ftp?: boolean;
   /**
    * Basic authentication username
    */

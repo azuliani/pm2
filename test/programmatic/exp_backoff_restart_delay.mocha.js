@@ -8,8 +8,25 @@ const exec = require('child_process').exec
 const path = require('path')
 
 describe('Exponential backoff feature', function() {
+  this.timeout(60000);
   var pm2
   var test_path = path.join(__dirname, 'fixtures', 'exp-backoff')
+
+  // The backoff loop runs at its own pace (faster on fast runtimes like bun,
+  // slower on CI): poll for the expected state instead of asserting at fixed
+  // sleep offsets, otherwise the check can fire after the loop already
+  // completed and the reset timer zeroed prev_restart_delay
+  function waitForProc(predicate, cb) {
+    var iv = setInterval(() => {
+      pm2.list((err, procs) => {
+        if (err || !procs || !procs[0]) return
+        if (predicate(procs[0])) {
+          clearInterval(iv)
+          cb(procs[0])
+        }
+      })
+    }, 50)
+  }
 
   after(function(done) {
     pm2.delete('all', function() {
@@ -37,29 +54,18 @@ describe('Exponential backoff feature', function() {
   })
 
   it('should have set the prev_restart delay', (done) => {
-    setTimeout(() => {
-      pm2.list((err, procs) => {
-        should(procs[0].pm2_env.prev_restart_delay).be.aboveOrEqual(100)
-        done()
-      })
-    }, 800)
+    waitForProc((proc) => proc.pm2_env.prev_restart_delay >= 100, () => done())
   })
 
   it('should have incremented the prev_restart delay', (done) => {
-    setTimeout(() => {
-      pm2.list((err, procs) => {
-        should(procs[0].pm2_env.prev_restart_delay).be.above(100)
-        done()
-      })
-    }, 500)
+    waitForProc((proc) => proc.pm2_env.prev_restart_delay > 100, () => done())
   })
 
   it('should reset prev_restart_delay if application has reach stable uptime', (done) => {
-    setTimeout(() => {
-      pm2.list((err, procs) => {
-        should(procs[0].pm2_env.prev_restart_delay).be.eql(0)
-        done()
-      })
-    }, 3000)
+    waitForProc((proc) => {
+      return proc.pm2_env.status === 'online' &&
+        proc.pm2_env.restart_time === 5 &&
+        proc.pm2_env.prev_restart_delay === 0
+    }, () => done())
   })
 })

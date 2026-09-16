@@ -1,18 +1,32 @@
 <div align="center">
  <br/>
 
-![https://raw.githubusercontent.com/Unitech/pm2/master/pres/pm2-logo-2.png](https://raw.githubusercontent.com/Unitech/pm2/master/pres/pm2-logo-2.png)
+<picture>
+  <source
+    srcset="https://raw.githubusercontent.com/Unitech/pm2/master/pres/pm2-v4.png"
+    width=710px
+    media="(prefers-color-scheme: light)"
+  />
+  <source
+    srcset="https://raw.githubusercontent.com/Unitech/pm2/master/pres/pm2-v4-dark-mode.png"
+    width=710px
+    media="(prefers-color-scheme: dark), (prefers-color-scheme: no-preference)"
+  />
+  <img src="https://raw.githubusercontent.com/Unitech/pm2/master/pres/pm2-v4.png" alt="PM2" />
+</picture>
 
+  <br/>
+<br/>
 <b>P</b>(rocess) <b>M</b>(anager) <b>2</b><br/>
   <i>Runtime Edition</i>
 <br/><br/>
 
 
-<a title="PM2 Downloads" href="https://npm-stat.com/charts.html?package=pm2&from=2018-01-01&to=2023-08-01">
+<a title="PM2 Downloads" href="https://npm-stat.com/charts.html?package=pm2">
   <img src="https://img.shields.io/npm/dm/pm2" alt="Downloads per Month"/>
 </a>
 
-<a title="PM2 Downloads" href="https://npm-stat.com/charts.html?package=pm2&from=2018-01-01&to=2023-08-01">
+<a title="PM2 Downloads" href="https://npm-stat.com/charts.html?package=pm2">
   <img src="https://img.shields.io/npm/dy/pm2" alt="Downloads per Year"/>
 </a>
 
@@ -33,7 +47,7 @@ This is a fork of [PM2](https://github.com/Unitech/pm2) that **restarts processe
 
 By default, PM2 restarts your process when an uncaught exception occurs, but **not** when an unhandled promise rejection occurs. This inconsistency can leave your application in a broken state without triggering a restart.
 
-This fork modifies PM2's core process containers to exit on unhandled rejections, ensuring your process restarts and recovers automatically. This works consistently in both **cluster mode** and **fork mode**.
+This fork makes unhandled rejections behave exactly as under a plain `node app.js`: PM2 registers no `unhandledRejection` listener of its own, so Node applies its native `--unhandled-rejections` handling. By default the rejection is raised as an uncaught exception and the process exits with code 1, which PM2 logs, reports on the bus as `process:exception`, and restarts. A rejection your own code handles (an `unhandledRejection` or `uncaughtException` listener, or `--unhandled-rejections=warn`) leaves the process running, as in plain Node. This works in both **cluster mode** and **fork mode**; cluster mode crashes also report exit code 1 instead of 0. Under Bun, rejections likewise terminate natively (exit 1), but Bun does not pass them to `uncaughtException` listeners, so PM2 emits no `process:exception` bus event for them.
 
 ### Installation
 
@@ -59,11 +73,11 @@ Starting an application in production mode is as easy as:
 $ pm2 start app.js
 ```
 
-PM2 is constantly assailed by [more than 1800 tests](https://github.com/Unitech/pm2/actions/workflows/node.js.yml).
+PM2 is battle-tested by [a comprehensive test suite](https://github.com/Unitech/pm2/actions/workflows/node.js.yml).
 
 Official website: [https://pm2.keymetrics.io/](https://pm2.keymetrics.io/)
 
-Works on Linux (stable) & macOS (stable) & Windows (stable). All Node.js versions are supported starting Node.js 12.X and Bun since v1
+Works on Linux, macOS, and Windows. Supports Node.js 18+ and Bun 1+.
 
 
 ## Installing PM2
@@ -79,7 +93,12 @@ $ npm install pm2 -g
 ```bash
 $ bun install pm2 -g
 ```
-**Please note that you might need to symlink node to bun if you only want to use bun via `sudo ln -s /home/$USER/.bun/bin/bun /usr/bin/node`**
+
+If you only have Bun installed (no Node.js), symlink `node` to `bun` so PM2's `#!/usr/bin/env node` shebang resolves to Bun's node-compatibility runtime:
+
+```bash
+$ sudo ln -s $(which bun) /usr/local/bin/node
+```
 
 ___
 
@@ -91,6 +110,8 @@ You can start any application (Node.js, Bun, and also Python, Ruby, binaries in 
 
 ```bash
 $ pm2 start app.js
+$ pm2 start app.ts
+$ pm2 start app.py
 ```
 
 Your app is now daemonized, monitored and kept alive forever.
@@ -131,9 +152,9 @@ $ pm2 monit
 
 ### Cluster Mode: Node.js Load Balancing & Zero Downtime Reload
 
-The Cluster mode is a special mode when starting a Node.js application, it starts multiple processes and load-balance HTTP/TCP/UDP queries between them. This increase overall performance (by a factor of x10 on 16 cores machines) and reliability (faster socket re-balancing in case of unhandled errors).
+Cluster mode starts multiple Node.js processes and load-balances HTTP/TCP/UDP queries between them. This significantly increases throughput on multi-core machines and improves reliability (faster socket re-balancing in case of unhandled errors).
 
-![Framework supported](https://raw.githubusercontent.com/Unitech/PM2/master/pres/cluster.png)
+![Framework supported](https://raw.githubusercontent.com/Unitech/pm2/master/pres/cluster.png)
 
 Starting a Node.js application in cluster mode that will leverage all CPUs available:
 
@@ -145,38 +166,25 @@ $ pm2 start api.js -i <processes>
 
 **Zero Downtime Reload**
 
-Hot Reload allows to update an application without any downtime:
+Hot Reload allows you to update an application without any downtime:
 
 ```bash
 $ pm2 reload all
 ```
 
-[More informations about how PM2 make clustering easy](https://pm2.keymetrics.io/docs/usage/cluster-mode/)
+[More information about how PM2 makes clustering easy](https://pm2.keymetrics.io/docs/usage/cluster-mode/)
 
 ### Container Support
 
 With the drop-in replacement command for `node`, called `pm2-runtime`, run your Node.js application in a hardened production environment.
 Using it is seamless:
 
-```
+```dockerfile
 RUN npm install pm2 -g
 CMD [ "pm2-runtime", "npm", "--", "start" ]
 ```
 
 [Read More about the dedicated integration](https://pm2.keymetrics.io/docs/usage/docker-pm2-nodejs/)
-
-### Host monitoring speedbar
-
-PM2 allows to monitor your host/server vitals with a monitoring speedbar.
-
-To enable host monitoring:
-
-```bash
-$ pm2 set pm2:sysmonit true
-$ pm2 update
-```
-
-![Framework supported](https://raw.githubusercontent.com/Unitech/PM2/master/pres/vitals.png)
 
 ### Terminal Based Monitoring
 
@@ -196,14 +204,14 @@ To consult logs just type the command:
 $ pm2 logs
 ```
 
-Standard, Raw, JSON and formated output are available.
+Standard, Raw, JSON and formatted output are available.
 
 Examples:
 
 ```bash
 $ pm2 logs APP-NAME       # Display APP-NAME logs
 $ pm2 logs --json         # JSON output
-$ pm2 logs --format       # Formated output
+$ pm2 logs --format       # Formatted output
 
 $ pm2 flush               # Flush all logs
 $ pm2 reloadLogs          # Reload all logs
@@ -221,7 +229,7 @@ $ pm2 install pm2-logrotate
 
 PM2 can generate and configure a Startup Script to keep PM2 and your processes alive at every server restart.
 
-Init Systems Supported: **systemd**, **upstart**, **launchd**, **rc.d**
+Init Systems Supported: **systemd**, **upstart**, **systemv**, **openrc**, **launchd**, **rcd**, **rcd-openbsd**, **smf**
 
 ```bash
 # Generate Startup Script
@@ -261,11 +269,11 @@ Thanks in advance and we hope that you like PM2!
 
 ## CHANGELOG
 
-[CHANGELOG](https://github.com/Unitech/PM2/blob/master/CHANGELOG.md)
+[CHANGELOG](https://github.com/Unitech/pm2/blob/master/CHANGELOG.md)
 
 ## Contributors
 
-[Contributors](http://pm2.keymetrics.io/hall-of-fame/)
+[Contributors](https://pm2.keymetrics.io/hall-of-fame/)
 
 ## License
 

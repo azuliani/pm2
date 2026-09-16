@@ -1,3 +1,130 @@
+## 7.0.4
+
+### Features
+
+- Start `.ts` apps with Node.js native type stripping when bun is not installed (Node.js >= 22.18 / 23.6, `--experimental-strip-types` auto-injected on 22.6+); `ts-node` fallback now resolved from the app's own dependencies
+
+### Bug Fixes
+
+- Fix `pm2 start --container` / `--container --dist` crashing with `Cannot find module` — wrong require depth in `Containerizer.js` from the v7 promptly internalization
+- Bump `js-yaml` 4.3.0 → 4.3.1
+- Fix overlapping reloads colliding on the `_old_<pm_id>` slot and orphaning a cluster worker — a reload is now refused while one is in progress #6129
+- Ignore stale exit events from a replaced process — fixes double start on Windows with `shutdown_with_message` #6142
+- Fix `retrying in NaNms` kill log and ~1ms poll spam when `kill_retry_time` is unset — fallback to `KILL_RETRY_TIME` constant (100ms, `PM2_KILL_RETRY_TIME` overridable)
+- Fix `pm2 start`/`restart` RPC hanging forever when a cluster worker dies before its `online` event (bad `node_args`, boot OOM) — executeApp now concludes on exit-before-online
+- Surface the daemon's actual error in CLI output instead of masking everything as `Process not found`
+- Pin OpenTelemetry package versions in `pm2 install-otel` and re-emit legacy HTTP span tags (`http.method`, `http.status_code`, `http.target`) dropped by `@opentelemetry/instrumentation-http` >= 0.220
+
+### Core Refactor
+
+- Remove dead code: `promise.min.js` polyfill (native `Promise`), `IsAbsolute.js` (native `path.isAbsolute`), unused Java/Ruby Dockerfile templates, always-false `win64` platform checks
+
+## 7.0.3
+
+### Bug Fixes
+
+- Fix daemon failing to boot on Node.js < 14.18 — embedded `vizion` used `node:`-scheme requires; switched to bare specifiers
+
+## 7.0.2
+
+### Bug Fixes
+
+- Fix `pm2 serve` returning 403 Forbidden on Windows — traversal guard used hardcoded `/` separator #6109
+- Fix `pm2 ls` table misalignment when a username exceeds the `user` column width — cli-tableau's `truncate()` miscounts ANSI bytes, leaking bold into the `watching` column
+- Fix long status lines (e.g. `Applying action … on app […]`) wrapping on narrow terminals — `Common.printOut` now ANSI-aware crops single-line TTY output to terminal width (piped output unaffected)
+
+### Features
+
+- `pm2 ls` host-metrics line now shown by default`pm2 update`)
+- `pm2 ls` adaptive layout: picks the widest layout that fits the terminal — full → condensed → new ultra-compact `mini` (`id · name · status · cpu · mem`) — and caps the `name` column so long names can't overflow the table
+- `pm2 ls` host-metrics line only lists network interfaces carrying traffic (hides idle utun/awdl/bridge/anpi/unused en*)
+- `pm2 ls` host-metrics line: replaced `mem free` with `ram usage` (%), added GPU memory/temperature when reported, per-interface network errors/drops shown when non-zero
+
+### Core Refactor
+
+- Drop old vizion module, refactor to support only git and drop 3 submodules
+- Replace the bundled `pm2-sysmonit` module and `systeminformation` with `lib/tools/SysMetrics.js` (Linux/macOS); `pm2 slist`/`getSystemData` and the Docker metrics path now read this collector. Covered by `test/programmatic/sysmetrics.mocha.js`
+
+### Security
+
+- Bump `js-yaml` 4.1.1 → 4.3.0 — fixes quadratic-complexity DoS in merge-key handling (GHSA-h67p-54hq-rp68) #6122
+- Bump `ws` 8.20.0 → 8.21.0 — fixes uninitialized-memory disclosure and tiny-fragment DoS (GHSA-58qx-3vcg-4xpx, GHSA-96hv-2xvq-fx4p) #6116
+- Bump `@pm2/js-api` 0.8.0 → 0.8.1, pulling in patched `ws@8.21.0` (its transitive `ws` was pinned to the vulnerable 7.x). Production deps are now advisory-free (`npm audit --omit=dev` clean)
+
+## 7.0.1
+
+### Bug Fixes
+
+- Fix Python (and other non-Node) interpreter regression on Ubuntu: bun runtime detection used a naive `includes('bun')` substring check that matched any path containing the letters "bun" — most notably `/home/ubuntu/...`. Affected paths were routed through `ProcessContainerForkBun.js` and crashed with `SyntaxError: unterminated string literal` when Python tried to parse the JS container. Anchored the match to the end of the interpreter path (`=== 'bun'` or `/bun$/`) in both `lib/God/ForkMode.js` and `lib/Common.js` #5990
+- Display `max_memory_restart` in `pm2 describe` output when set #5925
+- Add missing `port` option to `StartOptions` TypeScript declaration #6045
+- Fix incorrect file permissions on `openrc.tpl` template (0755 → 0644) #5957
+- Fix Windows cmd.exe regression: revert `bin/pm2*` launchers to `#!/usr/bin/env node` shebang (was polyglot `#!/bin/sh`). Polyglot worked on Linux/macOS but broke npm's `pm2.cmd` shim on Windows — `cmd.exe` can't interpret `/bin/sh` shebang and failed with `'"/bin/sh"' is not recognized as an internal or external command`. PowerShell's auto-generated `pm2.ps1` shim happened to call `node` directly so it kept working, masking the regression. Bun-only Linux/macOS users (no Node installed) need to symlink `node` to `bun` (`sudo ln -s $(which bun) /usr/local/bin/node`) — same workaround used in the project's bun test Dockerfile. Documented in README #6108
+
+
+## 7.0.0
+
+### Breaking Changes
+
+- Require Node.js >= 18.0.0 (dropped Node.js 16 support)
+
+### Core Refactor
+
+- Internalize pm2-axon, pm2-axon-rpc, pm2-io-bpm, pm2-io-agent, fclone as local modules (reduced supply chain surface)
+- Internalize pm2-multimeter and charm into lib/tools/multimeter (zero external deps)
+- Add Bun runtime support (ProcessContainerBun.js, ProcessContainerForkBun.js)
+- Replace `needle` with native `fetch` (CliAuth, TAR publish)
+- Replace `enquirer` with lightweight built-in prompt (boilerplate selector)
+- Replace `promptly` with built-in lib/tools/prompt
+- Replace `mkdirp` with native `fs.mkdirSync({ recursive: true })`
+- Replace `source-map-support` with native `process.setSourceMapsEnabled()`
+- Replace `sprintf-js` with template literals (Dashboard)
+- Replace `url.parse()` with native `URL` constructor (Serve, Utility, CliAuth)
+- Remove `fclone` npm dep, use internalized module
+- Drop auto source map file detection in Common.prepareAppConf
+
+### Security
+
+- CVE-2025-5891 Fix ReDoS in Config.js string-to-array split regex #6075
+- CVE-2026-27699 Update proxy-agent to 6.5.0, basic-ftp to 5.3.1 #6088
+- Fix command injection in WebAuth.js open() — replace exec() with execFile() #6089
+- Fix command injection in PM2IO.js open() — replace exec() with execFile(), validate SUDO_USER
+- Fix command injection in lib/tools/open.js — replace exec() with execFile(), validate SUDO_USER
+- Fix prototype pollution in Configuration.set/unset via __proto__ key traversal #6089
+- Fix HttpInterface env stripping never executing (WEB_STRIP_ENV_VARS) #6089
+
+### Bug Fixes
+
+- Rewrite TreeKill: single ps snapshot + in-memory tree build, eliminates race conditions. SIGKILL escalation now targets surviving child processes directly instead of re-walking a dead tree #6084
+- Fix [object Object] env vars leaked to fork mode subprocesses #6073
+- Fix Windows home path: use os.homedir() instead of HOMEPATH/HOMEDRIVE env vars #6106
+- Fix Windows TreeKill callback consistency
+- Fix missing BPM monitoring injection in Bun cluster mode (ProcessContainerBun.js)
+- Fix ReferenceError crash in Bun cluster console overrides when disable_logs is true
+- Fix CliAuth wrong credentials error displaying "undefined" instead of error message
+
+### Features
+
+- Add `--ftp` option to `pm2 serve` for directory listing (python http.server style)
+
+### Dependencies
+
+- Add OpenTelemetry tracing as direct dependencies (@opentelemetry/api, sdk-node, auto-instrumentations-node)
+- Upgrade OpenTelemetry packages to latest
+- Update pidusage from 3.0.2 to 4.0.1
+- Upgrade ws to ^8.18.0, eventemitter2 to ^6.4.9
+- Remove needle, enquirer, promptly, mkdirp, source-map-support, sprintf-js, fclone from npm dependencies
+
+### Testing
+
+- Add Docker parallel test runner with Node.js and Bun support
+- Add Windows test suite (test/windows.sh)
+- Add OpenTelemetry tracing tests
+- Add TreeKill unit tests
+- Add test scripts for internalized modules (bpm, axon, axon-rpc, io-agent)
+- Fix test compatibility for Node.js 22+ and Bun
+- CI matrix: Node.js 18, 20 + latest
+
 
 ## 6.0.14
 

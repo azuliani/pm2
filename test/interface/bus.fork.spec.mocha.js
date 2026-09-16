@@ -1,6 +1,7 @@
 
 var should = require('should');
 var PM2    = require('../..');
+var cst    = require('../../constants.js');
 var Plan   = require('../helpers/plan.js');
 
 var PROCESS_ARCH  = Object.keys({
@@ -56,6 +57,7 @@ process.on('uncaughtException', function(e) {
 });
 
 describe('PM2 BUS / RPC', function() {
+  this.timeout(30000);
   var pm2 = new PM2.custom({
     cwd         : __dirname + '/../fixtures/interface'
   });
@@ -69,7 +71,7 @@ describe('PM2 BUS / RPC', function() {
     pm2.connect(function() {
       pm2.launchBus(function(err, bus) {
         pm2_bus = bus;
-        setTimeout(done, 1000);
+        setTimeout(done, 3000);
       });
     });
   });
@@ -155,7 +157,9 @@ describe('PM2 BUS / RPC', function() {
       });
     });
 
-    it('should (process:exception) with promise', function(done) {
+    // @azuliani/pm2: Bun does not pass unhandled rejections to uncaughtException
+    // listeners, so PM2 cannot emit process:exception for them there
+    (cst.IS_BUN ? it.skip : it)('should (process:exception) with promise', function(done) {
       var plan = new Plan(1, done);
 
       pm2_bus.on('*', function(event, data) {
