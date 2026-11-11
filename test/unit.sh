@@ -72,6 +72,7 @@ runUnitTest $D/api.mocha.js
 runUnitTest $D/lazy_api.mocha.js
 #runUnitTest $D/version.mocha.js
 runUnitTest $D/exp_backoff_restart_delay.mocha.js
+runUnitTest $D/restart_delay_status.mocha.js
 runUnitTest $D/api.backward.compatibility.mocha.js
 runUnitTest $D/custom_action.mocha.js
 runUnitTest $D/logs.js
